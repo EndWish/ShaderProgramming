@@ -1,0 +1,11 @@
+Vertex vs Point
+Vertex는 위치뿐만 아니라 여러 정보를 가질 수 있는 점
+어떤 프리미티브냐에 따라 출력해야하는 픽셀의 개수가 달라질 수 있다.
+
+vertex Transform에서 입력된 버텍스의 개수만큼 연산이 수행된다.(이 단계까지는 점인지 선이지를 구분 불가)
+primitive assembly : 정점들을 뭘로 만들 것이가? 이 단계를 지나면 점인지 선인지 삼각형인지 정해진다.
+Rasterization and Interpolation : 이 단계를 지나면 정점들이 픽셀로 바뀌게 된다.
+
+vertex Transform과 Fragment Operation이 Vertex Shader와 Fragment Shader로 바뀌게 됨.
+
+
