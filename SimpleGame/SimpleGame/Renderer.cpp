@@ -4,8 +4,8 @@
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
 	Initialize(windowSizeX, windowSizeY);
+	Class0310();
 }
-
 
 Renderer::~Renderer()
 {
@@ -182,8 +182,34 @@ void Renderer::DrawSolidRect(float x, float y, float z, float size, float r, flo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Renderer::Class0310_Render() {
+	//Program select
+	glUseProgram(m_SolidRectShader);
+	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Trans"), 0, 0, 0, 1);
+	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Color"), 1, 1, 1, 1);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
+}
+
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
 {
 	*newX = x * 2.f / m_WindowSizeX;
 	*newY = y * 2.f / m_WindowSizeY;
+}
+
+void Renderer::Class0310() {
+	float vertices[] = { 0,0,0, 1,0,0, 1,1,0 };	//CPU메로리에 생성된다.
+	
+	glGenBuffers(1, &m_testVBO);	//glGenBuffers(개수, id가 반환될 변수); Buffer Object ID 가 testVBO에 리턴된다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);	//glBindBuffer(형태,id);	// 쓰임새(형태)를 구체화 해준다.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);	
+	/*	GPU에 메모리할당하겠다. (GL_STATIC_DRAW은 데이터가 한번 정해지면 바꾸지 않겠다는 의미 vs DYNAMIC)
+		glBufferData는 실제로 메모리를 할당하고 올리기 때문에 시간이 많이 걸릴 수 있다.*/
+
+	
+
 }
