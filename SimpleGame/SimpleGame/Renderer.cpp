@@ -182,17 +182,35 @@ void Renderer::DrawSolidRect(float x, float y, float z, float size, float r, flo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+float g_time = 0.5;
+
 void Renderer::Class0310_Render() {
 	//Program select
 	glUseProgram(m_SolidRectShader);
 	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Trans"), 0, 0, 0, 1);
 	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Color"), 1, 1, 1, 1);
 
-	glEnableVertexAttribArray(0);
+	int attribLoc_Position = -1;
+	attribLoc_Position = glGetAttribLocation(m_SolidRectShader, "a_Position");
+	glEnableVertexAttribArray(attribLoc_Position);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int attribLoc_Position1 = glGetAttribLocation(m_SolidRectShader, "a_Position1");
+	glEnableVertexAttribArray(attribLoc_Position1);	// layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
+	glVertexAttribPointer(attribLoc_Position1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	int uniformLoc_Scale = -1;
+	uniformLoc_Scale = glGetUniformLocation(m_SolidRectShader, "u_Scale");	// 함수이름이 Attribe인지 Uniform인지 잘 확인하자.
+	glUniform1f(uniformLoc_Scale, g_time);
+	g_time += 0.001f;
+	if (g_time > 1.f)
+		g_time = 0.f;
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
+
+
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
@@ -210,6 +228,10 @@ void Renderer::Class0310() {
 	/*	GPU에 메모리할당하겠다. (GL_STATIC_DRAW은 데이터가 한번 정해지면 바꾸지 않겠다는 의미 vs DYNAMIC)
 		glBufferData는 실제로 메모리를 할당하고 올리기 때문에 시간이 많이 걸릴 수 있다.*/
 
-	
+	float vertices2[] = { -1,-1,0, 0,-1,0, 0,0,0 };	//CPU메로리에 생성된다.
+
+	glGenBuffers(1, &m_testVBO1);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
 
 }
