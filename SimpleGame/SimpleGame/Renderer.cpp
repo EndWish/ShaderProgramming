@@ -4,7 +4,6 @@
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
 	Initialize(windowSizeX, windowSizeY);
-	Class0310();
 }
 
 Renderer::~Renderer()
@@ -19,7 +18,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
 	//Load shaders
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
-	
+	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");
+
 	//Create VBOs
 	CreateVertexBufferObjects();
 
@@ -27,6 +27,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	{
 		m_Initialized = true;
 	}
+
+	CreateParticles();
 }
 
 bool Renderer::IsInitialized()
@@ -46,6 +48,29 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_VBORect);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(rect), rect, GL_STATIC_DRAW);
+
+	float vertices[] = { 0,0,0, 1,0,0, 1,1,0 };	//CPU메로리에 생성된다.
+
+	glGenBuffers(1, &m_testVBO);	//glGenBuffers(개수, id가 반환될 변수); Buffer Object ID 가 testVBO에 리턴된다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);	//glBindBuffer(형태,id);	// 쓰임새(형태)를 구체화 해준다.
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	/*	GPU에 메모리할당하겠다. (GL_STATIC_DRAW은 데이터가 한번 정해지면 바꾸지 않겠다는 의미 vs DYNAMIC)
+		glBufferData는 실제로 메모리를 할당하고 올리기 때문에 시간이 많이 걸릴 수 있다.*/
+
+	float vertices2[] = { -1,-1,0, 0,-1,0, 0,0,0 };	//CPU메로리에 생성된다.
+
+	glGenBuffers(1, &m_testVBO1);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
+
+	float verticesColors[] = {	1,0,0,1,
+						0,1,0,1,
+						0,0,1,1 };	//CPU메로리에 생성된다.
+
+	glGenBuffers(1, &m_testVBOColor);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBOColor);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesColors), verticesColors, GL_STATIC_DRAW);
+
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -182,7 +207,7 @@ void Renderer::DrawSolidRect(float x, float y, float z, float size, float r, flo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-float g_time = 0.5;
+float g_time = 1.f;
 
 void Renderer::Class0310_Render() {
 	//Program select
@@ -201,37 +226,80 @@ void Renderer::Class0310_Render() {
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
 	glVertexAttribPointer(attribLoc_Position1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
+	int attribLoc_Color = -1;
+	attribLoc_Color = glGetAttribLocation(m_SolidRectShader, "a_Color");
+	glEnableVertexAttribArray(attribLoc_Color);	// layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBOColor);
+	glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
 	int uniformLoc_Scale = -1;
 	uniformLoc_Scale = glGetUniformLocation(m_SolidRectShader, "u_Scale");	// 함수이름이 Attribe인지 Uniform인지 잘 확인하자.
 	glUniform1f(uniformLoc_Scale, g_time);
-	g_time += 0.001f;
-	if (g_time > 1.f)
-		g_time = 0.f;
+	//g_time += 0.001f;
+	//if (g_time > 1.f)
+	//	g_time = 0.f;
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
 
 
 }
 
+void Renderer::DrawParticleEffect() {
+	//Program select
+	int shaderProgram = m_ParticleShader;
+	glUseProgram(shaderProgram);
+
+	int attribLoc_Position = -1;
+	attribLoc_Position = glGetAttribLocation(shaderProgram, "a_Position");
+	glEnableVertexAttribArray(attribLoc_Position);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
+	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
+}
+
+void Renderer::CreateParticles() {
+	float centerX, centerY;
+	centerX = 0.f;
+	centerY = 0.f;
+	float size = 0.5f;
+	int particleCount = 1;	// 버텍스가 6개 필요
+	m_ParticleVerticesCount = particleCount * 6;
+	int floatCount = particleCount * 6 * 3;
+	float* vertices = new float[floatCount];
+
+	int index = 0;
+	vertices[index] = centerX - size; ++index;
+	vertices[index] = centerY + size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	vertices[index] = centerX - size; ++index;
+	vertices[index] = centerY - size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	vertices[index] = centerX + size; ++index;
+	vertices[index] = centerY + size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	vertices[index] = centerX + size; ++index;
+	vertices[index] = centerY + size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	vertices[index] = centerX - size; ++index;
+	vertices[index] = centerY - size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	vertices[index] = centerX + size; ++index;
+	vertices[index] = centerY - size; ++index;
+	vertices[index] = 0.f; ++index;
+
+	glGenBuffers(1, &m_particleVBOPosition);
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
+}
+
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
 {
 	*newX = x * 2.f / m_WindowSizeX;
 	*newY = y * 2.f / m_WindowSizeY;
-}
-
-void Renderer::Class0310() {
-	float vertices[] = { 0,0,0, 1,0,0, 1,1,0 };	//CPU메로리에 생성된다.
-	
-	glGenBuffers(1, &m_testVBO);	//glGenBuffers(개수, id가 반환될 변수); Buffer Object ID 가 testVBO에 리턴된다.
-	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);	//glBindBuffer(형태,id);	// 쓰임새(형태)를 구체화 해준다.
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);	
-	/*	GPU에 메모리할당하겠다. (GL_STATIC_DRAW은 데이터가 한번 정해지면 바꾸지 않겠다는 의미 vs DYNAMIC)
-		glBufferData는 실제로 메모리를 할당하고 올리기 때문에 시간이 많이 걸릴 수 있다.*/
-
-	float vertices2[] = { -1,-1,0, 0,-1,0, 0,0,0 };	//CPU메로리에 생성된다.
-
-	glGenBuffers(1, &m_testVBO1);
-	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
-
 }
