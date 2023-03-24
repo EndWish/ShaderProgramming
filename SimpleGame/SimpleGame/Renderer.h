@@ -34,17 +34,18 @@ private:
 
 	GLuint m_VBORect = 0;
 	GLuint m_SolidRectShader = 0;
-	
 
 	GLuint m_testVBO = 0;
 	GLuint m_testVBO1 = 0;
 	GLuint m_testVBOColor = 0;
 
 	// particle VBO
-	void CreateParticles();
+	void CreateParticles(int numParticles);
 	GLuint m_ParticleShader = 0;
 	GLuint m_particleVBOPosition = -1;
-	//GLuint m_particleVBOColor = -1;
+	GLuint m_particleVBOVelocity = -1;
+	GLuint m_particleVBOEmitTime = -1;
+	GLuint m_particleVBOLifeTime = -1;
 	GLuint m_ParticleVerticesCount = -1;
 
 

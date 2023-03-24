@@ -28,7 +28,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 		m_Initialized = true;
 	}
 
-	CreateParticles();
+	CreateParticles(1000);
 }
 
 bool Renderer::IsInitialized()
@@ -207,7 +207,7 @@ void Renderer::DrawSolidRect(float x, float y, float z, float size, float r, flo
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-float g_time = 1.f;
+float g_time = 0.f;
 
 void Renderer::Class0310_Render() {
 	//Program select
@@ -249,53 +249,131 @@ void Renderer::DrawParticleEffect() {
 	int shaderProgram = m_ParticleShader;
 	glUseProgram(shaderProgram);
 
+	g_time += 1 / 300.f;
+
 	int attribLoc_Position = -1;
 	attribLoc_Position = glGetAttribLocation(shaderProgram, "a_Position");
 	glEnableVertexAttribArray(attribLoc_Position);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
 	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
 	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
 
+	int attribLoc_Velocity = -1;
+	attribLoc_Velocity = glGetAttribLocation(shaderProgram, "a_Velocity");
+	glEnableVertexAttribArray(attribLoc_Velocity);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOVelocity);
+	glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int attribLoc_Emittime = -1;
+	attribLoc_Emittime = glGetAttribLocation(shaderProgram, "a_EmitTime");
+	glEnableVertexAttribArray(attribLoc_Emittime);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOEmitTime);
+	glVertexAttribPointer(attribLoc_Emittime, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int attribLoc_LifeTime = -1;
+	attribLoc_LifeTime = glGetAttribLocation(shaderProgram, "a_LifeTime");
+	glEnableVertexAttribArray(attribLoc_LifeTime);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOLifeTime);
+	glVertexAttribPointer(attribLoc_LifeTime, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shaderProgram, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
 }
 
-void Renderer::CreateParticles() {
+void Renderer::CreateParticles(int numParticles) {
 	float centerX, centerY;
-	centerX = 0.f;
-	centerY = 0.f;
-	float size = 0.5f;
-	int particleCount = 1;	// 버텍스가 6개 필요
+	float size = 0.01f;
+	int particleCount = numParticles;	// 버텍스가 6개 필요
 	m_ParticleVerticesCount = particleCount * 6;
 	int floatCount = particleCount * 6 * 3;
+	int floatCountSingle = particleCount * 6;
 	float* vertices = new float[floatCount];
 
+	std::uniform_real_distribution<float> urdPosition(-1, 1);
+
+	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
+	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
+
 	int index = 0;
-	vertices[index] = centerX - size; ++index;
-	vertices[index] = centerY + size; ++index;
-	vertices[index] = 0.f; ++index;
+	for (int i = 0; i < particleCount; ++i) {
+		centerX = 0;// urdPosition(rd);
+		centerY = 0;// urdPosition(rd);
 
-	vertices[index] = centerX - size; ++index;
-	vertices[index] = centerY - size; ++index;
-	vertices[index] = 0.f; ++index;
-
-	vertices[index] = centerX + size; ++index;
-	vertices[index] = centerY + size; ++index;
-	vertices[index] = 0.f; ++index;
-
-	vertices[index] = centerX + size; ++index;
-	vertices[index] = centerY + size; ++index;
-	vertices[index] = 0.f; ++index;
-
-	vertices[index] = centerX - size; ++index;
-	vertices[index] = centerY - size; ++index;
-	vertices[index] = 0.f; ++index;
-
-	vertices[index] = centerX + size; ++index;
-	vertices[index] = centerY - size; ++index;
-	vertices[index] = 0.f; ++index;
+		for (int j = 0; j < 6; ++j) {
+			vertices[index] = centerX + vertexDx[j] * size; ++index;
+			vertices[index] = centerY + vertexDy[j] * size; ++index;
+			vertices[index] = 0.f; ++index;
+		}
+	}
 
 	glGenBuffers(1, &m_particleVBOPosition);
 	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
+
+	// velocity
+	float* velocities = new float[floatCount];
+	std::uniform_real_distribution<float> urdVelocity1(-1.0f, 1.0f);
+	std::uniform_real_distribution<float> urdVelocity2(0.0f, 2.0f);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempVel[3] = { urdVelocity1(rd), urdVelocity2(rd) , 0 };	// 새로운 속도
+		
+		// 6개의 점 모두에게 같은 속도를 준다.
+		for (int j = 0; j < 6; ++j) {
+			velocities[index] = tempVel[0]; ++index;
+			velocities[index] = tempVel[1]; ++index;
+			velocities[index] = tempVel[2]; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_particleVBOVelocity);
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOVelocity);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, velocities, GL_STATIC_DRAW);	// 이 API가 호출되고 끝나면 해당 데이터는 모두 복사가 된다.
+
+	// emitTime
+	float* emitTimes = new float[floatCountSingle];
+	std::uniform_real_distribution<float> urdEmitTime(0.0f, 5.0f);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempEmitTime = urdEmitTime(rd);	// 새로운 생성시간.
+
+		// 6개의 점 모두에게 같은 생성시간을 준다.
+		for (int j = 0; j < 6; ++j) {
+			emitTimes[index] = tempEmitTime; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_particleVBOEmitTime);
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOEmitTime);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, emitTimes, GL_STATIC_DRAW);	// 이 API가 호출되고 끝나면 해당 데이터는 모두 복사가 된다.
+
+	// lifeTime
+	float* lifeTimes = new float[floatCountSingle];
+	std::uniform_real_distribution<float> urdLifeTime(2.0f, 3.0f);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempLifeTime = urdLifeTime(rd);	// 새로운 생성시간.
+
+		// 6개의 점 모두에게 같은 생성시간을 준다.
+		for (int j = 0; j < 6; ++j) {
+			lifeTimes[index] = tempLifeTime; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_particleVBOLifeTime);
+	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOLifeTime);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, lifeTimes, GL_STATIC_DRAW);	// 이 API가 호출되고 끝나면 해당 데이터는 모두 복사가 된다.
+
+	delete[] vertices;
+	delete[] velocities;
+	delete[] emitTimes;
+	delete[] lifeTimes;
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
