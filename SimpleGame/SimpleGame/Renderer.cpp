@@ -28,7 +28,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 		m_Initialized = true;
 	}
 
-	CreateParticles(1000);
+	CreateParticles(1);
 }
 
 bool Renderer::IsInitialized()
