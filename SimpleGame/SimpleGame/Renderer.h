@@ -46,8 +46,11 @@ private:
 	GLuint m_particleVBOVelocity = -1;
 	GLuint m_particleVBOEmitTime = -1;
 	GLuint m_particleVBOLifeTime = -1;
+	GLuint m_ParticleVBOPeriod = -1;
+	GLuint m_ParticleVBOAmp = -1;
+	GLuint m_ParticleVBORadian = -1;
 	GLuint m_ParticleVerticesCount = -1;
-
+	
 
 };
 

@@ -28,7 +28,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 		m_Initialized = true;
 	}
 
-	CreateParticles(1);
+	CreateParticles(1000);
 }
 
 bool Renderer::IsInitialized()
@@ -275,6 +275,25 @@ void Renderer::DrawParticleEffect() {
 	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOLifeTime);
 	glVertexAttribPointer(attribLoc_LifeTime, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
 
+	int attribLoc_Period = -1;
+	attribLoc_Period = glGetAttribLocation(shaderProgram, "a_Period");
+	glEnableVertexAttribArray(attribLoc_Period);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPeriod);
+	glVertexAttribPointer(attribLoc_Period, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int attribLoc_Amp = -1;
+	attribLoc_Amp = glGetAttribLocation(shaderProgram, "a_Amp");
+	glEnableVertexAttribArray(attribLoc_Amp);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOAmp);
+	glVertexAttribPointer(attribLoc_Amp, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	int attribLoc_Radian = -1;
+	attribLoc_Radian = glGetAttribLocation(shaderProgram, "a_Radian");
+	glEnableVertexAttribArray(attribLoc_Radian);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBORadian);
+	glVertexAttribPointer(attribLoc_Radian, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shaderProgram, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
@@ -370,10 +389,66 @@ void Renderer::CreateParticles(int numParticles) {
 	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOLifeTime);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, lifeTimes, GL_STATIC_DRAW);	// 이 API가 호출되고 끝나면 해당 데이터는 모두 복사가 된다.
 
+	// period
+	float* periods = new float[floatCountSingle];
+	std::uniform_real_distribution<float> urdPeriod(0.5f, 2.0f);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempPeriod = urdPeriod(rd);	// 새로운 생성시간.
+
+		// 6개의 점 모두에게 같은 생성시간을 준다.
+		for (int j = 0; j < 6; ++j) {
+			periods[index] = tempPeriod; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_ParticleVBOPeriod);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPeriod);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, periods, GL_STATIC_DRAW);
+
+	// Amp
+	float* amps = new float[floatCountSingle];
+	std::uniform_real_distribution<float> urdAmps(-1.f, 1.0f);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempAmp = urdAmps(rd);	// 새로운 생성시간.
+
+		// 6개의 점 모두에게 같은 생성시간을 준다.
+		for (int j = 0; j < 6; ++j) {
+			amps[index] = tempAmp; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_ParticleVBOAmp);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOAmp);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, amps, GL_STATIC_DRAW);
+
+	// Radian
+	float* radians = new float[floatCountSingle];
+	std::uniform_real_distribution<float> urdRadian(0.f, 3.14159f * 2);
+
+	index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		float tempRadian = urdRadian(rd);	// 새로운 생성시간.
+
+		// 6개의 점 모두에게 같은 생성시간을 준다.
+		for (int j = 0; j < 6; ++j) {
+			radians[index] = tempRadian; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_ParticleVBORadian);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBORadian);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountSingle, radians, GL_STATIC_DRAW);
+
 	delete[] vertices;
 	delete[] velocities;
 	delete[] emitTimes;
 	delete[] lifeTimes;
+	delete[] periods;
+	delete[] radians;
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
