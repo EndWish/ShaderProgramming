@@ -7,6 +7,7 @@ in float a_LifeTime;
 in float a_Period;
 in float a_Amp;
 in float a_Radian;
+in vec4 a_Color;
 
 uniform float u_Time;
 
@@ -15,6 +16,8 @@ const float c_LifeTime = 2.0;
 const vec3 c_Vel = vec3(0.3, 0.5, 0.0);
 const float c_PI = 3.141592;
 
+varying vec4 v_Color;	// == out vec4 v_Color
+
 vec4 Circle();
 vec4 GraphSin();
 vec4 P1();
@@ -22,7 +25,8 @@ vec2 Rotate(vec2 direction, float radian);
 
 void main()
 {
-	gl_Position = Circle();
+	gl_Position = GraphSin();
+	v_Color = a_Color;
 }
 
 vec4 Circle() {

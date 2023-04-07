@@ -25,6 +25,7 @@ private:
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
 	void CreateVertexBufferObjects();
+	void CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount, std::vector<std::uniform_real_distribution<float>>& urds);
 	void GetGLPosition(float x, float y, float *newX, float *newY);
 
 	bool m_Initialized = false;
@@ -49,7 +50,10 @@ private:
 	GLuint m_ParticleVBOPeriod = -1;
 	GLuint m_ParticleVBOAmp = -1;
 	GLuint m_ParticleVBORadian = -1;
+	GLuint m_ParticleVBOColor = -1;
 	GLuint m_ParticleVerticesCount = -1;
+
+	
 	
 
 };

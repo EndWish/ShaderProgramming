@@ -1,0 +1,8 @@
+레이더 처럼 막대기가 닿으면 점이 표시되는 것 구현
+
+Qualifier는 Stage 자체의 입출력
+in == attribute
+out == varying
+
+이전  stage로 부터의 입력과 다름 stage의 입력의 이름이 같아야 한다.
+버텍스 셰이더 입력 데이터 패킹
