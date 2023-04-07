@@ -251,17 +251,42 @@ void Renderer::DrawParticleEffect() {
 
 	g_time += 1 / 300.f;
 
+	//OutDataFloat(shaderProgram, "a_Position", m_particleVBOPosition, 3);
+	//int attribLoc_Position = -1;
+	//attribLoc_Position = glGetAttribLocation(shaderProgram, "a_Position");
+	//glEnableVertexAttribArray(attribLoc_Position);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	//glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
+	//glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	//int attribLoc_Color = -1;
+	//attribLoc_Color = glGetAttribLocation(shaderProgram, "a_Color");
+	//glEnableVertexAttribArray(attribLoc_Color);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	//glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOColor);
+	//glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
+	//int attribLoc_Velocity = -1;
+	//attribLoc_Velocity = glGetAttribLocation(shaderProgram, "a_Velocity");
+	//glEnableVertexAttribArray(attribLoc_Velocity);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	//glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOVelocity);
+	//glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
 	int attribLoc_Position = -1;
 	attribLoc_Position = glGetAttribLocation(shaderProgram, "a_Position");
-	glEnableVertexAttribArray(attribLoc_Position);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
-	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
-	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glEnableVertexAttribArray(attribLoc_Position);
+
+	int attribLoc_Color = -1;
+	attribLoc_Color = glGetAttribLocation(shaderProgram, "a_Color");
+	glEnableVertexAttribArray(attribLoc_Color);
 
 	int attribLoc_Velocity = -1;
 	attribLoc_Velocity = glGetAttribLocation(shaderProgram, "a_Velocity");
-	glEnableVertexAttribArray(attribLoc_Velocity);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
-	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOVelocity);
-	glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glEnableVertexAttribArray(attribLoc_Velocity);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelVBO);
+	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (GLvoid*)(3 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (GLvoid*)(7 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	
 
 	int attribLoc_Emittime = -1;
 	attribLoc_Emittime = glGetAttribLocation(shaderProgram, "a_EmitTime");
@@ -293,12 +318,6 @@ void Renderer::DrawParticleEffect() {
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBORadian);
 	glVertexAttribPointer(attribLoc_Radian, 1, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
 
-	int attribLoc_Color = -1;
-	attribLoc_Color = glGetAttribLocation(shaderProgram, "a_Color");
-	glEnableVertexAttribArray(attribLoc_Color);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOColor);
-	glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
-	
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shaderProgram, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
@@ -323,6 +342,7 @@ void Renderer::CreateParticles(int numParticles) {
 	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
 	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
 
+	// position
 	int index = 0;
 	for (int i = 0; i < particleCount; ++i) {
 		centerX = 0;// urdPosition(rd);
@@ -339,6 +359,17 @@ void Renderer::CreateParticles(int numParticles) {
 	glBindBuffer(GL_ARRAY_BUFFER, m_particleVBOPosition);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
 
+
+
+	// Color
+	std::vector<std::uniform_real_distribution<float>> urdColors{
+		std::uniform_real_distribution<float>(0.f, 1.f),
+		std::uniform_real_distribution<float>(0.f, 1.f),
+		std::uniform_real_distribution<float>(0.f, 1.f),
+		std::uniform_real_distribution<float>(1.f, 1.f),
+	};
+	CreateData(m_ParticleVBOColor, 4, particleCount, urdColors);
+
 	// velocity
 	std::vector<std::uniform_real_distribution<float>> urdVelocities{
 		std::uniform_real_distribution<float>(-1.0f, 1.0f),
@@ -346,6 +377,55 @@ void Renderer::CreateParticles(int numParticles) {
 		std::uniform_real_distribution<float>(0.0f, 0.0f),
 	};
 	CreateData(m_particleVBOVelocity, 3, particleCount, urdVelocities);
+
+	// position + color
+	int floatCountPosColor = particleCount * 6 * (3 + 4 + 3);	// pos + color
+	float* dataPosColorVels = new float[floatCountPosColor];
+
+	index = 0;
+	
+	for (int i = 0; i < particleCount; ++i) {
+
+		centerX = 0;	// urdPosition(rd);
+		centerY = 0;	// urdPosition(rd);
+
+		float* tempColorVal = new float[4];
+		float* tempVelVal = new float[3];
+		for (int j = 0; j < 4; ++j) {
+			tempColorVal[j] = urdColors[j](rd);
+		}
+		for (int j = 0; j < 3; ++j) {
+			tempVelVal[j] = urdVelocities[j](rd);
+		}
+
+		for (int j = 0; j < 6; ++j) {
+			// position
+			dataPosColorVels[index] = centerX + vertexDx[j] * size; ++index;
+			dataPosColorVels[index] = centerY + vertexDy[j] * size; ++index;
+			dataPosColorVels[index] = 0.f; ++index;
+
+			// color
+			for (int k = 0; k < 4; ++k) {
+				dataPosColorVels[index] = tempColorVal[k]; ++index;
+			}
+
+			// velocity
+			for (int k = 0; k < 3; ++k) {
+				dataPosColorVels[index] = tempVelVal[k]; ++index;
+			}
+		}
+
+		delete[] tempColorVal;
+		delete[] tempVelVal;
+	}
+
+	glGenBuffers(1, &m_ParticleVBOPositionColorVelVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountPosColor, dataPosColorVels, GL_STATIC_DRAW);
+	
+	delete[] dataPosColorVels;
+
+
 	
 	// emitTime
 	std::vector<std::uniform_real_distribution<float>> urdEmitTimes{
@@ -377,20 +457,10 @@ void Renderer::CreateParticles(int numParticles) {
 	};
 	CreateData(m_ParticleVBORadian, 1, particleCount, urdRadians);
 
-	// Color
-	std::vector<std::uniform_real_distribution<float>> urdColors{
-		std::uniform_real_distribution<float>(0.f, 1.f),
-		std::uniform_real_distribution<float>(0.f, 1.f),
-		std::uniform_real_distribution<float>(0.f, 1.f),
-		std::uniform_real_distribution<float>(1.f, 1.f),
-	};
-	CreateData(m_ParticleVBOColor, 4, particleCount, urdColors);
-
 	delete[] vertices;
 }
 
 void Renderer::CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount, std::vector<std::uniform_real_distribution<float>>& urds) {
-	// velocity
 	int floatCount = floatNumPerVertex * 6 * particleCount;
 	float* datas = new float[floatCount];
 
@@ -416,6 +486,15 @@ void Renderer::CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount,
 
 	delete[] tempVel;
 	delete[] datas;
+}
+
+void Renderer::OutDataFloat(int shaderProgram, const char* varName, GLuint VBO, GLuint nFloatPerVertex) {
+	int attribLocation = -1;
+	attribLocation = glGetAttribLocation(shaderProgram, varName);
+	glEnableVertexAttribArray(attribLocation);	// 해당 번지의 attribute가 활성화된다. layout(location)를 적어준다.
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(attribLocation, nFloatPerVertex, GL_FLOAT, GL_FALSE, 0, 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)

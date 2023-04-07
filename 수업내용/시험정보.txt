@@ -5,4 +5,9 @@ in == attribute
 out == varying
 
 이전  stage로 부터의 입력과 다름 stage의 입력의 이름이 같아야 한다.
-버텍스 셰이더 입력 데이터 패킹
+버텍스 셰이더 입력 데이터 패킹 : 한 점정메 대한 정보(위치, 색상)이 메모리상에 떨어진 곳에 있기 때문에 캐시가 계속 버려진다.
+
+각각 array 생성 => VBO가 따로 생성되어 있어서 하나의 속성값을 바꾸기가 쉽다.
+합친 array 생성 => 캐쉬가 효율적으로 작동한다.
+
+glVertexAttribPointer(attribLoc_Color, [float의 개수], GL_FLOAT, GL_FALSE, [주기의 크기 : 7 * sizeof(float)], [오프셋 크기 : (GLvoid*)(3 * sizeof(float))] );

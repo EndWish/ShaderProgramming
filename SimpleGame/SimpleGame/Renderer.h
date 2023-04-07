@@ -26,6 +26,7 @@ private:
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
 	void CreateVertexBufferObjects();
 	void CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount, std::vector<std::uniform_real_distribution<float>>& urds);
+	void OutDataFloat(int shaderProgram, const char* varName, GLuint VBO, GLuint nFloatPerVertex);
 	void GetGLPosition(float x, float y, float *newX, float *newY);
 
 	bool m_Initialized = false;
@@ -53,7 +54,7 @@ private:
 	GLuint m_ParticleVBOColor = -1;
 	GLuint m_ParticleVerticesCount = -1;
 
-	
+	GLuint m_ParticleVBOPositionColorVelVBO = -1;	// pos + color VBO
 	
 
 };
