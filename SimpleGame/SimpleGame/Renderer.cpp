@@ -29,7 +29,11 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 		m_Initialized = true;
 	}
 
+	// 파티클 정점 생성
 	CreateParticles(1000);
+
+	// 프래그먼트 샌드박스 정점 생성
+	CreateFragmentSandboxVertex(10);
 }
 
 bool Renderer::IsInitialized()
@@ -71,27 +75,6 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_testVBOColor);
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBOColor);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesColors), verticesColors, GL_STATIC_DRAW);
-
-
-
-	float rect1[]
-		=
-	{
-		//Triangle1
-		-1.f, -1.f, 0.f,	 0.f, 1.f,
-		-1.f, 1.f, 0.f,		 0.f, 0.f,
-		1.f, 1.f, 0.f,		 1.f, 0.f, 
-
-		//Triangle2
-		-1.f, -1.f, 0.f,	 0.f, 1.f,
-		1.f, 1.f, 0.f,		 1.f, 0.f,
-		1.f, -1.f, 0.f,		 1.f, 1.f
-	};
-
-	glGenBuffers(1, &m_FragmentSandboxVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(rect1), rect1, GL_STATIC_DRAW);
-
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -306,10 +289,15 @@ void Renderer::DrawParticleEffect() {
 	attribLoc_Velocity = glGetAttribLocation(shaderProgram, "a_Velocity");
 	glEnableVertexAttribArray(attribLoc_Velocity);
 
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelVBO);
-	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
-	glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (GLvoid*)(3 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
-	glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 10 * sizeof(float), (GLvoid*)(7 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	int attribLoc_UV = -1;
+	attribLoc_UV = glGetAttribLocation(shaderProgram, "a_Texcoord");
+	glEnableVertexAttribArray(attribLoc_UV);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelUVVBO);
+	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), 0);	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glVertexAttribPointer(attribLoc_Color, 4, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (GLvoid*)(3 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glVertexAttribPointer(attribLoc_Velocity, 3, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (GLvoid*)(7 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
+	glVertexAttribPointer(attribLoc_UV, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), (GLvoid*)(10 * sizeof(float)));	// Bind후 Pointer로 넘겨주면 쉐이더는 계속 기억을 하고 있다.
 	
 
 	int attribLoc_Emittime = -1;
@@ -374,13 +362,13 @@ void Renderer::DrawFragmentSandbox() {
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLES, 0, m_FragmentSandboxVertexCount);
 
 }
 
 void Renderer::CreateParticles(int numParticles) {
 	float centerX, centerY;
-	float size = 0.01f;
+	float size = 0.1f;
 	int particleCount = numParticles;	// 버텍스가 6개 필요
 	m_ParticleVerticesCount = particleCount * 6;
 	int floatCount = particleCount * 6 * 3;
@@ -393,6 +381,8 @@ void Renderer::CreateParticles(int numParticles) {
 
 	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
 	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
+	float uvDx[] = { 0, 0, 1, 1, 0, 1 };
+	float uvDy[] = { 0, 1, 0, 0, 1, 1 };
 
 	// position
 	int index = 0;
@@ -431,8 +421,8 @@ void Renderer::CreateParticles(int numParticles) {
 	CreateData(m_particleVBOVelocity, 3, particleCount, urdVelocities);
 
 	// position + color
-	int floatCountPosColor = particleCount * 6 * (3 + 4 + 3);	// pos + color
-	float* dataPosColorVels = new float[floatCountPosColor];
+	int floatCountPosColorVelUV = particleCount * 6 * (3 + 4 + 3 + 2);	// pos + color + vel + uv
+	float* dataPosColorVels = new float[floatCountPosColorVelUV];
 
 	index = 0;
 	
@@ -465,15 +455,20 @@ void Renderer::CreateParticles(int numParticles) {
 			for (int k = 0; k < 3; ++k) {
 				dataPosColorVels[index] = tempVelVal[k]; ++index;
 			}
+
+			// uv
+			dataPosColorVels[index] = uvDx[j]; ++index;
+			dataPosColorVels[index] = uvDy[j]; ++index;
+
 		}
 
 		delete[] tempColorVal;
 		delete[] tempVelVal;
 	}
 
-	glGenBuffers(1, &m_ParticleVBOPositionColorVelVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountPosColor, dataPosColorVels, GL_STATIC_DRAW);
+	glGenBuffers(1, &m_ParticleVBOPositionColorVelUVVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBOPositionColorVelUVVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCountPosColorVelUV, dataPosColorVels, GL_STATIC_DRAW);
 	
 	delete[] dataPosColorVels;
 
@@ -508,6 +503,44 @@ void Renderer::CreateParticles(int numParticles) {
 		std::uniform_real_distribution<float>(0.f, 3.14159f * 2)
 	};
 	CreateData(m_ParticleVBORadian, 1, particleCount, urdRadians);
+
+	delete[] vertices;
+}
+
+void Renderer::CreateFragmentSandboxVertex(int numParticles) {
+	m_FragmentSandboxVertexCount = numParticles * 6;
+
+	int floatCount = 5 * m_FragmentSandboxVertexCount;
+	float* vertices = new float[floatCount];
+
+	std::uniform_real_distribution<float> urdPosition(-1, 1);
+
+	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
+	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
+	float uvDx[] = { 0, 0, 1, 1, 0, 1 };
+	float uvDy[] = { 0, 1, 0, 0, 1, 1 };
+
+	// position
+	int index = 0;
+	for (int i = 0; i < numParticles; ++i) {
+		float centerX = urdPosition(rd);
+		float centerY = urdPosition(rd);
+		float size = 0.1f;
+
+		for (int j = 0; j < 6; ++j) {
+			// 정점
+			vertices[index] = centerX + vertexDx[j] * size; ++index;
+			vertices[index] = centerY + vertexDy[j] * size; ++index;
+			vertices[index] = 0.f; ++index;
+
+			vertices[index] = uvDx[j]; ++index;
+			vertices[index] = uvDy[j]; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_FragmentSandboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
 
 	delete[] vertices;
 }

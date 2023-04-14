@@ -54,11 +54,13 @@ private:
 	GLuint m_ParticleVBOColor = -1;
 	GLuint m_ParticleVerticesCount = -1;
 
-	GLuint m_ParticleVBOPositionColorVelVBO = -1;	// pos + color VBO
+	GLuint m_ParticleVBOPositionColorVelUVVBO = -1;	// pos + color VBO + uv
 
 	///////
+	void CreateFragmentSandboxVertex(int numVertex);
 	GLuint m_FragmentSandboxShader = 0;
 	GLuint m_FragmentSandboxVBO = 0;
+	GLuint m_FragmentSandboxVertexCount = 0;
 	
 
 };
