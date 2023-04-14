@@ -18,18 +18,18 @@ const float c_PI = 3.141592;
 
 varying vec4 v_Color;	// == out vec4 v_Color
 
-vec4 Circle();
-vec4 GraphSin();
-vec4 P1();
+void Circle();
+void GraphSin();
+void P1();
 vec2 Rotate(vec2 direction, float radian);
 
 void main()
 {
-	gl_Position = GraphSin();
-	v_Color = a_Color;
+	GraphSin();
+	
 }
 
-vec4 Circle() {
+void Circle() {
 	vec4 newPosition = vec4(0,0,0,1);
 	float time = max(0.f, u_Time - a_EmitTime);
 
@@ -47,20 +47,26 @@ vec4 Circle() {
 		newPosition.y = a_Position.y + ny;
 	}
 
-	return newPosition;
+	
+	gl_Position = newPosition;
+	v_Color = a_Color;
 }
 
-vec4 GraphSin() {
+void GraphSin() {
 	vec4 newPosition = vec4(0,0,0,1);
+	float newAlpha;
+
 	float time = max(0.f, u_Time - a_EmitTime);
+	
 
-	if(time < 0.0) {
-
+	if(time < 0.0f) {
+		
 	}
 	else {
+	float newTime = a_LifeTime * fract(time / a_LifeTime);		// 0 ~ a_LifeTime
 		vec2 normal = Rotate(normalize(c_Vel).xy, c_PI/2);
 
-		float newTime = a_LifeTime * fract(time / a_LifeTime);
+		
 		float nx = sin(a_Radian);
 		float ny = cos(a_Radian);
 
@@ -69,17 +75,20 @@ vec4 GraphSin() {
 
 		newPosition.xy += normal * a_Amp * (newTime / a_LifeTime) * sin(a_Period * newTime * c_PI * 2.0f);
 
+		newAlpha =  1.0f - newTime / a_LifeTime;
+		//newAlpha = pow(newAlpha, 0.5f);
 	}
 
-	return newPosition;
+	gl_Position = newPosition;
+	v_Color = vec4(a_Color.rgb, a_Color.a * newAlpha);
 }
 
-vec4 P1()
+void P1()
 {
 	float time = max(0.f, u_Time - a_EmitTime);
 	vec4 newPosition = vec4(0,0,0,1);
 
-	if(time < 0.0) {
+	if(time < 0.0f) {
 		
 	}
 	else {
@@ -90,7 +99,9 @@ vec4 P1()
 		newPosition.w = 1;
 		
 	}
-	return newPosition;
+	
+	gl_Position = newPosition;
+	v_Color = a_Color;
 }
 
 vec2 Rotate(vec2 direction, float radian) {

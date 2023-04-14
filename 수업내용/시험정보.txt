@@ -11,3 +11,6 @@ out == varying
 합친 array 생성 => 캐쉬가 효율적으로 작동한다.
 
 glVertexAttribPointer(attribLoc_Color, [float의 개수], GL_FLOAT, GL_FALSE, [주기의 크기 : 7 * sizeof(float)], [오프셋 크기 : (GLvoid*)(3 * sizeof(float))] );
+
+
+화면좌표계는 왼쪽 아래가 0,0 이다.

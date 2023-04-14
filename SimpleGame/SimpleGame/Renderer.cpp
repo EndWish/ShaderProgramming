@@ -19,6 +19,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	//Load shaders
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");
+	m_FragmentSandboxShader = CompileShaders("./Shaders/FragmentSandbox.vs", "./Shaders/FragmentSandbox.fs");
 
 	//Create VBOs
 	CreateVertexBufferObjects();
@@ -70,6 +71,26 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_testVBOColor);
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBOColor);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesColors), verticesColors, GL_STATIC_DRAW);
+
+
+
+	float rect1[]
+		=
+	{
+		//Triangle1
+		-1.f, -1.f, 0.f,	 0.f, 1.f,
+		-1.f, 1.f, 0.f,		 0.f, 0.f,
+		1.f, 1.f, 0.f,		 1.f, 0.f, 
+
+		//Triangle2
+		-1.f, -1.f, 0.f,	 0.f, 1.f,
+		1.f, 1.f, 0.f,		 1.f, 0.f,
+		1.f, -1.f, 0.f,		 1.f, 1.f
+	};
+
+	glGenBuffers(1, &m_FragmentSandboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(rect1), rect1, GL_STATIC_DRAW);
 
 }
 
@@ -178,7 +199,7 @@ GLuint Renderer::CompileShaders(char* filenameVS, char* filenameFS)
 	}
 
 	glUseProgram(ShaderProgram);
-	std::cout << filenameVS << ", " << filenameFS << " Shader compiling is done.";
+	std::cout << filenameVS << ", " << filenameFS << " Shader compiling is done.\n";
 
 	return ShaderProgram;
 }
@@ -241,13 +262,16 @@ void Renderer::Class0310_Render() {
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
 
-
+	
 }
 
 void Renderer::DrawParticleEffect() {
 	//Program select
 	int shaderProgram = m_ParticleShader;
 	glUseProgram(shaderProgram);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	g_time += 1 / 300.f;
 
@@ -324,6 +348,34 @@ void Renderer::DrawParticleEffect() {
 
 
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
+
+	glDisable(GL_BLEND);
+}
+
+void Renderer::DrawFragmentSandbox() {
+	g_time += 1 / 300.f;
+
+	GLuint shader = m_FragmentSandboxShader;
+	glUseProgram(shader);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int posLoc = glGetAttribLocation(shader, "a_Position");
+	int texLoc = glGetAttribLocation(shader, "a_Texcoord");
+	glEnableVertexAttribArray(posLoc);
+	glEnableVertexAttribArray(texLoc);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+	glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
 }
 
 void Renderer::CreateParticles(int numParticles) {
