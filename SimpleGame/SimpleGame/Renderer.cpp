@@ -662,6 +662,8 @@ void Renderer::DrawVertexSandbox() {
 
 	GLuint shader = m_VertexSandboxShader;
 	glUseProgram(shader);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	int attribLoc_Position = -1;
 	attribLoc_Position = glGetAttribLocation(shader, "a_Position");
@@ -679,6 +681,8 @@ void Renderer::DrawVertexSandbox() {
 	glDrawArrays(GL_LINE_STRIP, 0, m_HoriLineVertexCount);
 	glUniform1f(uniformLoc_Time, g_time + 0.2f);
 	glDrawArrays(GL_LINE_STRIP, 0, m_HoriLineVertexCount);
+
+	glDisable(GL_BLEND);
 
 }
 

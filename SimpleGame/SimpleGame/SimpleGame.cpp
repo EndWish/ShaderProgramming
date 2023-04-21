@@ -22,15 +22,17 @@ int g_WindowSizeY = 1024;
 
 void RenderScene(void)
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// color버퍼와 depth버퍼를 지워라
-	glClearColor(0.0f, 0.0f, 0.0f, 0.2f);	// 해당 색으로 지운다. 
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// color버퍼와 depth버퍼를 지워라
+	//glClearColor(0.0f, 0.0f, 0.0f, 0.2f);	// 해당 색으로 지운다. 
 
+	g_Renderer->DrawAlphaClear();
 	// Renderer Test
 	//g_Renderer->DrawSolidRect(0, 0, 0, 4, 1, 0, 1, 1);
 	//g_Renderer->DrawParticleEffect();
-	//g_Renderer->DrawFragmentSandbox();
-	//g_Renderer->DrawAlphaClear();
-	g_Renderer->DrawVertexSandbox();
+	g_Renderer->DrawFragmentSandbox();
+	
+	
+	//g_Renderer->DrawVertexSandbox();
 
 	glutSwapBuffers();
 }

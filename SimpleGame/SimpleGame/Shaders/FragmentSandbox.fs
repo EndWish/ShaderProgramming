@@ -63,33 +63,44 @@ void radar()
 	}
 
 	FragColor = vec4(result + 10*value);
+}
 
-//////////////////////////////////////////////////////////////////
- //   vec2 temp = v_Texcoord - vec2(0.5, 0.5);
- //   float d = length(temp);
- //   float value = sin(d * 3 * c_PI - u_Time * c_PI * 3);
- //   value = pow(value, pow(d + 1, 20));
- //   //FragColor = vec4(value);
+void flag(){
+    FragColor = vec4(0);
 
- //   // 각 타겟의 위치와 (0,0)위치의 거리를 재서 그릴지 안그릴지를 정한다.
- //   for(int i = 0; i < 3; ++i){
- //       FragColor = vec4(v_Texcoord, 0, 1.0f);
- //       vec2 newCoord = v_Texcoord - u_TargetPoses[i];
- //       float dist = length(newCoord);
- //       if(dist <= 0.1f){
- //           FragColor = vec4(value, value, value, 1.0f);
- //           return;
- //       }
- //   }
+    for(int i = 0; i < 5; ++i){
+        float newTime = u_Time + i * 0.2f;
 
- //   FragColor = vec4(value, value, value, 1.0f);
+        float newColor = v_Texcoord.x * 0.5 * sin(v_Texcoord.x * c_PI * 2 - 10 * newTime);
+        float sinValue = sin((v_Texcoord.x * c_PI * 2 * 100) / (1 + v_Texcoord.x * 10) - newTime * 200.f );
+        float width = 0.1f * v_Texcoord.x;
+        if(newColor < (v_Texcoord.y  - 0.5f) * 2.0f && 
+            (v_Texcoord.y  - 0.5f) * 2.0f < newColor + width) {
+            FragColor = max(FragColor, vec4(1 * sinValue));
+        }
+    }
+
+
+    //FragColor = vec4(v_Texcoord, 0, 1);
+    //FragColor = vec4(newColor);
+}
+
+void test(){
+    float newValueX = v_Texcoord.x * 100.f * c_PI; // 2*PI로 나눈 개수만큼 줄무늬가 생긴다.
+    float newValueY = v_Texcoord.y * 100.f * c_PI; // 2*PI로 나눈 개수만큼 줄무늬가 생긴다.
+    float outColorGreyVertical = sin(newValueX);
+    float outColorGreyHorizontal = sin(newValueY);
+    float newColor = max(outColorGreyVertical, outColorGreyHorizontal);
+    FragColor = vec4(newColor, newColor, newColor, 1);
 }
 
 void main()
 {
     //wave();
     //circle();
-    radar();
+    //radar();
+    flag();
+    //test();
 }
 
 vec2 Rotate(vec2 direction, float radian) {
