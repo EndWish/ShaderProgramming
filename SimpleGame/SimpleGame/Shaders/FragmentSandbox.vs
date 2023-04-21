@@ -7,6 +7,9 @@ out vec2 v_Texcoord;
 
 uniform float u_Time;
 
+uniform vec2 u_TargetPos;
+uniform vec2 u_TargetPoses[10];
+
 void main()
 {
 	gl_Position = vec4(a_Position, 1.0);

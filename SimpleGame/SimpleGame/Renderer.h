@@ -18,6 +18,8 @@ public:
 	void Class0310_Render();
 	void DrawParticleEffect();
 	void DrawFragmentSandbox();
+	void DrawAlphaClear();
+	void DrawVertexSandbox();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -61,7 +63,20 @@ private:
 	GLuint m_FragmentSandboxShader = 0;
 	GLuint m_FragmentSandboxVBO = 0;
 	GLuint m_FragmentSandboxVertexCount = 0;
-	
+
+
+	//// 화면 전체에 (0,0,0,0.2) 반투명한 검정색을 그린다.
+	void CreateAlphaClearVertex(int numParticles);
+	GLuint m_AlphaClearShader = 0;
+	GLuint m_AlphaClearVBO = -1;
+	GLuint m_AlphaClearVertexCount = 0;
+
+	// 
+	void CreateVertexSandboxVertex();
+
+	GLuint m_VertexSandboxShader = 0;
+	GLuint m_HoriLineVBO = 0;
+	GLuint m_HoriLineVertexCount = 0;
 
 };
 

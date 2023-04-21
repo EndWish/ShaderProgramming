@@ -20,6 +20,8 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");
 	m_FragmentSandboxShader = CompileShaders("./Shaders/FragmentSandbox.vs", "./Shaders/FragmentSandbox.fs");
+	m_AlphaClearShader = CompileShaders("./Shaders/AlphaClear.vs", "./Shaders/AlphaClear.fs");
+	m_VertexSandboxShader = CompileShaders("./Shaders/VertexSandbox.vs", "./Shaders/VertexSandbox.fs");
 
 	//Create VBOs
 	CreateVertexBufferObjects();
@@ -30,10 +32,15 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	}
 
 	// 파티클 정점 생성
-	CreateParticles(1000);
+	CreateParticles(10000);
 
 	// 프래그먼트 샌드박스 정점 생성
-	CreateFragmentSandboxVertex(10);
+	CreateFragmentSandboxVertex(1);
+
+	// 
+	CreateAlphaClearVertex(1);
+
+	CreateVertexSandboxVertex();
 }
 
 bool Renderer::IsInitialized()
@@ -75,6 +82,7 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_testVBOColor);
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBOColor);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesColors), verticesColors, GL_STATIC_DRAW);
+
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
@@ -341,7 +349,7 @@ void Renderer::DrawParticleEffect() {
 }
 
 void Renderer::DrawFragmentSandbox() {
-	g_time += 1 / 300.f;
+	g_time += 1 / 3000.f;
 
 	GLuint shader = m_FragmentSandboxShader;
 	glUseProgram(shader);
@@ -362,13 +370,61 @@ void Renderer::DrawFragmentSandbox() {
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
 
+	int uniformLoc_TargetPos = -1;
+	uniformLoc_TargetPos = glGetUniformLocation(shader, "u_TargetPos");
+	glUniform2f(uniformLoc_TargetPos, 0.5f, 0.5f);	// 2f 인것에 주의
+
+	float targetPoses[] = { 0.5,0.5,
+		0.0f, 0.0f,
+		1.0f, 1.0f, };
+
+	int uniformLoc_TargetPoses = -1;
+	uniformLoc_TargetPoses = glGetUniformLocation(shader, "u_TargetPoses");
+	glUniform2fv(uniformLoc_TargetPoses, 3, targetPoses);	// 2f 인것에 주의
+
 	glDrawArrays(GL_TRIANGLES, 0, m_FragmentSandboxVertexCount);
 
 }
 
+void Renderer::DrawAlphaClear() {
+
+	GLuint shader = m_AlphaClearShader;
+	glUseProgram(shader);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int posLoc = glGetAttribLocation(shader, "a_Position");
+	//int texLoc = glGetAttribLocation(shader, "a_Texcoord");
+	glEnableVertexAttribArray(posLoc);
+	//glEnableVertexAttribArray(texLoc);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_AlphaClearVBO);
+	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
+	//glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+	int uniformLoc_TargetPos = -1;
+	uniformLoc_TargetPos = glGetUniformLocation(shader, "u_TargetPos");
+	glUniform2f(uniformLoc_TargetPos, 0.5f, 0.5f);	// 2f 인것에 주의
+
+	float targetPoses[] = { 0.5,0.5,
+		0.0f, 0.0f,
+		1.0f, 1.0f, };
+
+	int uniformLoc_TargetPoses = -1;
+	uniformLoc_TargetPoses = glGetUniformLocation(shader, "u_TargetPoses");
+	glUniform2fv(uniformLoc_TargetPoses, 3, targetPoses);	// 2f 인것에 주의
+
+	glDrawArrays(GL_TRIANGLES, 0, m_AlphaClearVertexCount);
+}
+
 void Renderer::CreateParticles(int numParticles) {
 	float centerX, centerY;
-	float size = 0.1f;
+	float size = 0.01f;
 	int particleCount = numParticles;	// 버텍스가 6개 필요
 	m_ParticleVerticesCount = particleCount * 6;
 	int floatCount = particleCount * 6 * 3;
@@ -523,9 +579,9 @@ void Renderer::CreateFragmentSandboxVertex(int numParticles) {
 	// position
 	int index = 0;
 	for (int i = 0; i < numParticles; ++i) {
-		float centerX = urdPosition(rd);
-		float centerY = urdPosition(rd);
-		float size = 0.1f;
+		float centerX = 0; // urdPosition(rd);
+		float centerY = 0; // urdPosition(rd);
+		float size = 1.f;
 
 		for (int j = 0; j < 6; ++j) {
 			// 정점
@@ -543,6 +599,87 @@ void Renderer::CreateFragmentSandboxVertex(int numParticles) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
 
 	delete[] vertices;
+}
+
+void Renderer::CreateAlphaClearVertex(int numParticles) {
+	m_AlphaClearVertexCount = numParticles * 6;
+
+	int floatCount = 3 * m_AlphaClearVertexCount;
+	float* vertices = new float[floatCount];
+
+	std::uniform_real_distribution<float> urdPosition(-1, 1);
+
+	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
+	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
+	//float uvDx[] = { 0, 0, 1, 1, 0, 1 };
+	//float uvDy[] = { 0, 1, 0, 0, 1, 1 };
+
+	// position
+	int index = 0;
+	for (int i = 0; i < numParticles; ++i) {
+		float centerX = 0; // urdPosition(rd);
+		float centerY = 0; // urdPosition(rd);
+		float size = 1.f;
+
+		for (int j = 0; j < 6; ++j) {
+			// 정점
+			vertices[index] = centerX + vertexDx[j] * size; ++index;
+			vertices[index] = centerY + vertexDy[j] * size; ++index;
+			vertices[index] = 0.f; ++index;
+
+			//vertices[index] = uvDx[j]; ++index;
+			//vertices[index] = uvDy[j]; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_AlphaClearVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_AlphaClearVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
+
+	delete[] vertices;
+}
+
+void Renderer::CreateVertexSandboxVertex() {
+	m_HoriLineVertexCount = 100;
+	int floatCount = m_HoriLineVertexCount * 3;
+	int index = 0;
+	float gap = 2.f / ((float)m_HoriLineVertexCount);
+	float* lineVerteices = new float[floatCount];
+	for (int i = 0; i < m_HoriLineVertexCount; ++i) {
+		lineVerteices[index] = (float)i * gap - 1.f; ++index;
+		lineVerteices[index] = 0.f; ++index;
+		lineVerteices[index] = 0.f; ++index;
+	}
+
+	glGenBuffers(1, &m_HoriLineVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_HoriLineVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, lineVerteices, GL_STATIC_DRAW);
+
+}
+
+void Renderer::DrawVertexSandbox() {
+	g_time += 1 / 300.f;
+
+	GLuint shader = m_VertexSandboxShader;
+	glUseProgram(shader);
+
+	int attribLoc_Position = -1;
+	attribLoc_Position = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribLoc_Position);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_HoriLineVBO);
+	glVertexAttribPointer(attribLoc_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+	glDrawArrays(GL_LINE_STRIP, 0, m_HoriLineVertexCount);
+	glUniform1f(uniformLoc_Time, g_time + 0.1f);
+	glDrawArrays(GL_LINE_STRIP, 0, m_HoriLineVertexCount);
+	glUniform1f(uniformLoc_Time, g_time + 0.2f);
+	glDrawArrays(GL_LINE_STRIP, 0, m_HoriLineVertexCount);
+
 }
 
 void Renderer::CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount, std::vector<std::uniform_real_distribution<float>>& urds) {
