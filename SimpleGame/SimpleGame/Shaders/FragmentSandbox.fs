@@ -105,7 +105,7 @@ void realFlag(){
         float vX = v_Texcoord.x;
         float yWidth = 1.5f;
         float yDistance = yValue - (sinValue * v_Texcoord.x - 0.75);
-        float vY = yDistance/yWidth;
+        float vY = 1.0 - yDistance/yWidth;
 
         FragColor = texture(u_Texture, vec2(vX, vY));
         //FragColor = vec4(vX, vY, 0, 1);

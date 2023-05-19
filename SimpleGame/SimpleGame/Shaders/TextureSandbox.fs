@@ -104,9 +104,24 @@ void MergedTexture() {
     FragColor = texture(u_TexSampler, newTexPos); 
 }
 
+void SATexture(){
+
+    float offsetX = 1.0f / 8.0f;
+    float offsetY = 1.0f / 6.0f;
+
+    int index = int(u_Time * 10.f) % 48;
+
+    float x = offsetX * (index % 8) + v_TexPos.x / 8.0f;
+    float y = offsetY * (index / 8) + v_TexPos.y / 6.0f;
+    vec2 newTexPos = vec2(x, y);
+
+    FragColor = texture(u_TexSampler, newTexPos);
+}
+
 void main()
 {
     //P7();
     //MultiTexture();
-    MergedTexture();
+    //MergedTexture();
+    SATexture();
 }

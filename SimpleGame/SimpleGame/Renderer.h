@@ -21,8 +21,10 @@ public:
 	void DrawAlphaClear();
 	void DrawVertexSandbox();
 	void DrawTextureSandbox();
+	void DrawGridMesh();
 	void CreateTexture();
 	GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
+	
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -96,8 +98,15 @@ private:
 	GLuint m_Texture4 = 0;
 	GLuint m_Texture5 = 0;
 	GLuint m_MergedTexture = 0;
+	GLuint m_ExploreTexture = 0;
 
 	GLuint m_ParticleTexture = 0;
+
+	//
+	void CreateGridMesh();
+	GLuint m_GridMeshShader = 0;
+	GLuint m_GridMeshVertexCount = 0;
+	GLuint m_GridMeshVBO = 0;
 
 };
 
