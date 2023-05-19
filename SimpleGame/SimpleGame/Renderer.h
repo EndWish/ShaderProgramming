@@ -20,6 +20,9 @@ public:
 	void DrawFragmentSandbox();
 	void DrawAlphaClear();
 	void DrawVertexSandbox();
+	void DrawTextureSandbox();
+	void CreateTexture();
+	GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -77,6 +80,24 @@ private:
 	GLuint m_VertexSandboxShader = 0;
 	GLuint m_HoriLineVBO = 0;
 	GLuint m_HoriLineVertexCount = 0;
+
+	//
+	void CreateTextureSandboxVertex();
+	GLuint m_TextureSandboxShader = 0;
+	GLuint m_TextureSandboxVBO = 0;
+	GLuint m_CheckerBoardTexture = 0;
+	GLuint m_RGBTexture = 0;
+
+	//
+	GLuint m_Texture0 = 0;
+	GLuint m_Texture1 = 0;
+	GLuint m_Texture2 = 0;
+	GLuint m_Texture3 = 0;
+	GLuint m_Texture4 = 0;
+	GLuint m_Texture5 = 0;
+	GLuint m_MergedTexture = 0;
+
+	GLuint m_ParticleTexture = 0;
 
 };
 

@@ -6,17 +6,17 @@ in vec4 v_Color;
 in vec2 v_Texcoord;
 
 uniform float u_Time;
+uniform sampler2D u_Texture;
 
 vec2 Rotate(vec2 direction, float radian);
 
 void wave();
 void circle();
+void Textured();
 
 void main()
 {
-    FragColor = vec4(v_Texcoord.x, v_Texcoord.y, 0, 1);// v_Color;
-    circle();
-    FragColor *= v_Color;
+    Textured();
 }
 
 
@@ -25,6 +25,11 @@ vec2 Rotate(vec2 direction, float radian) {
 	result.x = direction.x * cos(radian) - direction.y * sin(radian);
 	result.y = direction.x * sin(radian) - direction.y * cos(radian);
 	return result;
+}
+
+void Textured() {
+    vec4 result = texture(u_Texture, v_Texcoord) * v_Color;
+    FragColor = result;
 }
 
 void circle() {

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
+#include "LoadPng.h"
+#include <assert.h>
 
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
@@ -22,6 +24,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_FragmentSandboxShader = CompileShaders("./Shaders/FragmentSandbox.vs", "./Shaders/FragmentSandbox.fs");
 	m_AlphaClearShader = CompileShaders("./Shaders/AlphaClear.vs", "./Shaders/AlphaClear.fs");
 	m_VertexSandboxShader = CompileShaders("./Shaders/VertexSandbox.vs", "./Shaders/VertexSandbox.fs");
+	m_TextureSandboxShader = CompileShaders("./Shaders/TextureSandbox.vs", "./Shaders/TextureSandbox.fs");
 
 	//Create VBOs
 	CreateVertexBufferObjects();
@@ -40,7 +43,24 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	// 
 	CreateAlphaClearVertex(1);
 
+	// vertexSandbox
 	CreateVertexSandboxVertex();
+
+	// textureSandbox
+	CreateTextureSandboxVertex();
+	CreateTexture();
+
+	// Load Texture
+	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
+	m_Texture0 = CreatePngTexture("./texture1.png", GL_NEAREST);
+	m_Texture1 = CreatePngTexture("./texture2.png", GL_NEAREST);
+	m_Texture2 = CreatePngTexture("./texture3.png", GL_NEAREST);
+	m_Texture3 = CreatePngTexture("./texture4.png", GL_NEAREST);
+	m_Texture4 = CreatePngTexture("./texture5.png", GL_NEAREST);
+	m_Texture5 = CreatePngTexture("./texture6.png", GL_NEAREST);
+	m_MergedTexture = CreatePngTexture("./textureMerged.png", GL_NEAREST);
+	
+	m_ParticleTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 }
 
 bool Renderer::IsInitialized()
@@ -342,6 +362,10 @@ void Renderer::DrawParticleEffect() {
 	uniformLoc_Time = glGetUniformLocation(shaderProgram, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
 
+	int texULoc =  glGetUniformLocation(shaderProgram, "u_Texture");
+	glUniform1i(texULoc, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_ParticleTexture);
 
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
 
@@ -369,6 +393,11 @@ void Renderer::DrawFragmentSandbox() {
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformLoc_Time, g_time);
+
+	int texULoc = glGetUniformLocation(shader, "u_Texture");
+	glUniform1i(texULoc, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 
 	int uniformLoc_TargetPos = -1;
 	uniformLoc_TargetPos = glGetUniformLocation(shader, "u_TargetPos");
@@ -657,6 +686,41 @@ void Renderer::CreateVertexSandboxVertex() {
 
 }
 
+void Renderer::CreateTextureSandboxVertex() {
+	float vertexDx[] = { -1, -1, 1, 1, -1, 1 };
+	float vertexDy[] = { 1, -1, 1, 1, -1, -1 };
+	float uvDx[] = { 0, 0, 1, 1, 0, 1 };
+	float uvDy[] = { 0, 1, 0, 0, 1, 1 };
+
+	const int floatCount = 6 * 5;
+	float vertices[floatCount];
+
+	// position
+	int index = 0;
+	for (int i = 0; i < 1; ++i) {
+		float centerX = 0; // urdPosition(rd);
+		float centerY = 0; // urdPosition(rd);
+		float size = 1.f;
+
+		for (int j = 0; j < 6; ++j) {
+			// 정점
+			vertices[index] = centerX + vertexDx[j] * size; ++index;
+			vertices[index] = centerY + vertexDy[j] * size; ++index;
+			vertices[index] = 0.f; ++index;
+
+			vertices[index] = uvDx[j]; ++index;
+			vertices[index] = uvDy[j]; ++index;
+		}
+	}
+
+	glGenBuffers(1, &m_TextureSandboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
+
+
+
+}
+
 void Renderer::DrawVertexSandbox() {
 	g_time += 1 / 300.f;
 
@@ -684,6 +748,119 @@ void Renderer::DrawVertexSandbox() {
 
 	glDisable(GL_BLEND);
 
+}
+
+
+void Renderer::DrawTextureSandbox() {
+	g_time += 1 / 300.f;
+
+	GLuint shader = m_TextureSandboxShader;
+	glUseProgram(shader);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int posLoc = glGetAttribLocation(shader, "a_Position");
+	int texLoc = glGetAttribLocation(shader, "a_TexPos");
+	glEnableVertexAttribArray(posLoc);
+	glEnableVertexAttribArray(texLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+	glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+	int uniformLoc_TargetPos = -1;
+	uniformLoc_TargetPos = glGetUniformLocation(shader, "u_TargetPos");
+	glUniform2f(uniformLoc_TargetPos, 0.5f, 0.5f);	// 2f 인것에 주의
+
+	float targetPoses[] = { 0.5,0.5,
+		0.0f, 0.0f,
+		1.0f, 1.0f, };
+
+	int uniformLoc_TargetPoses = -1;
+	uniformLoc_TargetPoses = glGetUniformLocation(shader, "u_TargetPoses");
+	glUniform2fv(uniformLoc_TargetPoses, 3, targetPoses);	// 2f 인것에 주의
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_Texture0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_Texture1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, m_Texture2);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_Texture3);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, m_Texture4);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, m_Texture5);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, m_MergedTexture);
+	glActiveTexture(GL_TEXTURE0);
+
+
+	GLuint samplerULoc = glGetUniformLocation(shader, "u_TexSampler");
+	glUniform1i(samplerULoc, 6);
+
+	GLuint repeatULoc = glGetUniformLocation(shader, "u_XYRepeat");
+	glUniform2f(repeatULoc, (float)((int)g_time % 4), 4.f);
+
+	glDrawArrays(GL_TRIANGLES, 0, m_AlphaClearVertexCount);
+}
+
+void Renderer::CreateTexture() {
+	GLulong checkerboard[] =
+	{
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0xFFFFFFFF
+	};
+
+	glGenTextures(1, &m_CheckerBoardTexture);
+	glBindTexture(GL_TEXTURE_2D, m_CheckerBoardTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerboard);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);	// GL_LINER
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+}
+
+GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod) {
+	//Load Png
+	std::vector<unsigned char> image;
+	unsigned width, height;
+	unsigned error = lodepng::decode(image, width, height, filePath);
+	if (error != 0) {
+		std::cout << "PNG image loading failed : " << filePath << "\n";
+		assert(0);
+	}
+
+	GLuint temp;
+	glGenTextures(1, &temp);
+	glBindTexture(GL_TEXTURE_2D, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, samplingMethod);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod);
+
+	return temp;
 }
 
 void Renderer::CreateData(GLuint& VBO, int floatNumPerVertex, int particleCount, std::vector<std::uniform_real_distribution<float>>& urds) {

@@ -5,6 +5,7 @@ layout(location=0) out vec4 FragColor;
 in vec2 v_Texcoord;
 
 uniform float u_Time;
+uniform sampler2D u_Texture;
 
 uniform vec2 u_TargetPos;
 uniform vec2 u_TargetPoses[10];
@@ -94,13 +95,35 @@ void test(){
     FragColor = vec4(newColor, newColor, newColor, 1);
 }
 
+void realFlag(){
+    float period = (v_Texcoord.x + 1.0) * 1.f;
+    float xValue = v_Texcoord.x * 2.0f * c_PI * period;
+    float yValue = ((1.0 - v_Texcoord.y) - 0.5) * 2.0f;
+    float sinValue = 0.25 * sin(xValue - u_Time * 100.f);
+    if(sinValue * v_Texcoord.x + 0.75 > yValue
+    && sinValue * v_Texcoord.x - 0.75 < yValue){
+        float vX = v_Texcoord.x;
+        float yWidth = 1.5f;
+        float yDistance = yValue - (sinValue * v_Texcoord.x - 0.75);
+        float vY = yDistance/yWidth;
+
+        FragColor = texture(u_Texture, vec2(vX, vY));
+        //FragColor = vec4(vX, vY, 0, 1);
+
+    }
+    else{
+        FragColor = vec4(0);
+    }
+}
+
 void main()
 {
     //wave();
     //circle();
     //radar();
-    flag();
+    //flag();
     //test();
+    realFlag();
 }
 
 vec2 Rotate(vec2 direction, float radian) {
