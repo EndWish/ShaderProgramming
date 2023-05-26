@@ -54,6 +54,9 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	// GridMesh
 	CreateGridMesh();
 
+	// create FBOs
+	CreateFBOs();
+
 	// Load Texture
 	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 	m_Texture0 = CreatePngTexture("./texture1.png", GL_NEAREST);
@@ -817,6 +820,9 @@ void Renderer::DrawTextureSandbox() {
 }
 
 void Renderer::DrawGridMesh() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // m_A_FBO
+	glViewport(0, 0, 1024 / 1, 1024 / 1);	// 왼쪽, 아래, width, height
+
 	g_time += 1 / 300.f;
 
 	GLuint shader = m_GridMeshShader;
@@ -824,12 +830,25 @@ void Renderer::DrawGridMesh() {
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// 타임
+	int uniformLoc_Time = -1;
+	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(uniformLoc_Time, g_time);
+
+	// 포지션
 	int posLoc = glGetAttribLocation(shader, "a_Position");
 	glEnableVertexAttribArray(posLoc);
 	glBindBuffer(GL_ARRAY_BUFFER, m_GridMeshVBO);
 	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);
 
-	glDrawArrays(GL_LINE_STRIP, 0, m_GridMeshVertexCount);
+	// 텍스쳐
+	glBindTexture(GL_TEXTURE_2D, m_Texture0);
+	glActiveTexture(GL_TEXTURE0);
+	GLuint samplerULoc = glGetUniformLocation(shader, "u_TexSampler");
+	glUniform1i(samplerULoc, 0);
+
+	//glDrawArrays(GL_LINE_STRIP, 0, m_GridMeshVertexCount);
+	glDrawArrays(GL_TRIANGLES, 0, m_GridMeshVertexCount);
 }
 
 void Renderer::CreateTexture() {
@@ -884,6 +903,60 @@ GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod) {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod);
 
 	return temp;
+}
+
+void Renderer::CreateFBOs() {
+
+	//BFO
+	m_AFBOTexture = 0;
+	m_BFBOTexture = 0;
+	m_CFBOTexture = 0;
+
+	glGenTextures(1, &m_AFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_AFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);//RGBA8bit씩, 512x512크기의 RGBA포멧으로 채널당 바이트정보를 가지는 버퍼를 내용을 채우지 않고 생성
+
+	glGenTextures(1, &m_BFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);//RGBA8bit씩, 512x512크기의 RGBA포멧으로 채널당 바이트정보를 가지는 버퍼를 내용을 채우지 않고 생성
+
+	glGenTextures(1, &m_CFBOTexture);
+	glBindTexture(GL_TEXTURE_2D, m_CFBOTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);//RGBA8bit씩, 512x512크기의 RGBA포멧으로 채널당 바이트정보를 가지는 버퍼를 내용을 채우지 않고 생성
+
+
+	glGenRenderbuffers(1, &m_DepthRenderBuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glGenFramebuffers(1, &m_A_FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+	
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "fbo creation failed" << std::endl;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }
 
 void Renderer::CreateGridMesh() {
