@@ -1,6 +1,10 @@
 #version 330
 
-layout(location=0) out vec4 FragColor;
+layout(location=0) out vec4 FragColor0;
+layout(location=1) out vec4 FragColor1;
+layout(location=2) out vec4 FragColor2;
+layout(location=3) out vec4 FragColor3;
+layout(location=4) out vec4 FragColor4;
 
 in vec2 v_Texcoord;
 
@@ -22,25 +26,25 @@ void wave() {
         float height = sin(distance * 100 - u_Time * 10);
         height = pow(height, pow(distance + 1, 20));
 
-        FragColor = vec4(height * v_Texcoord.x, height * v_Texcoord.y, height, 1.0f);
+        FragColor0 = vec4(height * v_Texcoord.x, height * v_Texcoord.y, height, 1.0f);
     }
     else{
         float distance = sqrt( pow(v_Texcoord.x - 0.5f, 2) + pow(v_Texcoord.y - 0.5f, 2));
         float height = sin( distance * 100);
         height = pow(height, pow(distance + 1, 5));
 
-        FragColor = vec4(height, 0, 0, 1.0f);
+        FragColor0 = vec4(height, 0, 0, 1.0f);
     }
 }
 
 void circle() {
-    FragColor = vec4(v_Texcoord, 0, 1.0f);
+    FragColor1 = vec4(v_Texcoord, 0, 1.0f);
     vec2 newCoord = v_Texcoord - vec2(0.5f, 0.5f);
 
     if(length(newCoord) <= 0.5f){
-        FragColor = vec4(1, 1, 1, 1.0f);
+        FragColor1 = vec4(1, 1, 1, 1.0f);
     }else{
-        FragColor = vec4(0, 0, 0, 1.0f);
+        FragColor1 = vec4(0, 0, 0, 1.0f);
     }
 }
 
@@ -63,11 +67,11 @@ void radar()
 		}
 	}
 
-	FragColor = vec4(result + 10*value);
+	FragColor2 = vec4(result + 10*value);
 }
 
 void flag(){
-    FragColor = vec4(0);
+    FragColor3 = vec4(0);
 
     for(int i = 0; i < 5; ++i){
         float newTime = u_Time + i * 0.2f;
@@ -77,13 +81,13 @@ void flag(){
         float width = 0.1f * v_Texcoord.x;
         if(newColor < (v_Texcoord.y  - 0.5f) * 2.0f && 
             (v_Texcoord.y  - 0.5f) * 2.0f < newColor + width) {
-            FragColor = max(FragColor, vec4(1 * sinValue));
+            FragColor3 = max(FragColor3, vec4(1 * sinValue));
         }
     }
 
 
-    //FragColor = vec4(v_Texcoord, 0, 1);
-    //FragColor = vec4(newColor);
+    //FragColor3 = vec4(v_Texcoord, 0, 1);
+    //FragColor3 = vec4(newColor);
 }
 
 void test(){
@@ -92,7 +96,7 @@ void test(){
     float outColorGreyVertical = sin(newValueX);
     float outColorGreyHorizontal = sin(newValueY);
     float newColor = max(outColorGreyVertical, outColorGreyHorizontal);
-    FragColor = vec4(newColor, newColor, newColor, 1);
+    FragColor0 = vec4(newColor, newColor, newColor, 1);
 }
 
 void realFlag(){
@@ -107,23 +111,24 @@ void realFlag(){
         float yDistance = yValue - (sinValue * v_Texcoord.x - 0.75);
         float vY = 1.0 - yDistance/yWidth;
 
-        FragColor = texture(u_Texture, vec2(vX, vY));
-        //FragColor = vec4(vX, vY, 0, 1);
+        FragColor4 = texture(u_Texture, vec2(vX, vY));
+        //FragColor4 = vec4(vX, vY, 0, 1);
 
     }
     else{
-        FragColor = vec4(0);
+        FragColor4 = vec4(0);
     }
 }
 
 void main()
 {
-    //wave();
-    //circle();
-    //radar();
-    //flag();
-    //test();
+    wave();
+    circle();
+    radar();
+    flag();
     realFlag();
+
+    //test();
 }
 
 vec2 Rotate(vec2 direction, float radian) {
