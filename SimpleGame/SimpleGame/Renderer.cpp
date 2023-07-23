@@ -290,6 +290,13 @@ void Renderer::Class0310_Render() {
 }
 
 void Renderer::DrawParticleEffect() {
+
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+		GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, drawBuffers);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	//Program select
 	int shaderProgram = m_ParticleShader;
 	glUseProgram(shaderProgram);
@@ -297,7 +304,7 @@ void Renderer::DrawParticleEffect() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	g_time += 1 / 300.f;
+	//g_time += 1 / 300.f;
 
 	//OutDataFloat(shaderProgram, "a_Position", m_particleVBOPosition, 3);
 	//int attribLoc_Position = -1;
@@ -383,6 +390,13 @@ void Renderer::DrawParticleEffect() {
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVerticesCount);	// 프리미티브, 시작인덱스?, 정점 몇개를 그릴지
 
 	glDisable(GL_BLEND);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	DrawTexture(-0.75, -0.75, 128, 128, m_AFBOTexture);
+	DrawTexture(-0.25, -0.75, 128, 128, m_AFBOAttach_1_Texture);
+	DrawTexture( 0.25, -0.75, 128, 128, m_AFBOAttach_2_Texture);
+	DrawTexture( 0.75, -0.75, 128, 128, m_AFBOAttach_3_Texture);
+	
 }
 
 void Renderer::DrawFragmentSandbox() {
@@ -393,7 +407,7 @@ void Renderer::DrawFragmentSandbox() {
 	glDrawBuffers(5, drawBuffers);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	g_time += 1 / 3000.f;
+	//g_time += 1 / 300.f;
 
 	GLuint shader = m_FragmentSandboxShader;
 	glUseProgram(shader);
@@ -412,7 +426,7 @@ void Renderer::DrawFragmentSandbox() {
 
 	int uniformLoc_Time = -1;
 	uniformLoc_Time = glGetUniformLocation(shader, "u_Time");
-	glUniform1f(uniformLoc_Time, g_time);
+	glUniform1f(uniformLoc_Time, g_time / 10.f);
 
 	int texULoc = glGetUniformLocation(shader, "u_Texture");
 	glUniform1i(texULoc, 0);
@@ -434,10 +448,10 @@ void Renderer::DrawFragmentSandbox() {
 	glDrawArrays(GL_TRIANGLES, 0, m_FragmentSandboxVertexCount);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	DrawTexture(-0.5,  0.5, 256, 256, m_AFBOAttach_1_Texture);
-	DrawTexture( 0.5,  0.5, 256, 256, m_AFBOAttach_2_Texture);
-	DrawTexture(-0.5, -0.5, 256, 256, m_AFBOAttach_3_Texture);
-	DrawTexture( 0.5, -0.5, 256, 256, m_AFBOAttach_4_Texture);
+	DrawTexture(-0.75, -0.25, 128, 128, m_AFBOAttach_1_Texture);
+	DrawTexture(-0.25, -0.25, 128, 128, m_AFBOAttach_2_Texture);
+	DrawTexture( 0.25, -0.25, 128, 128, m_AFBOAttach_3_Texture);
+	DrawTexture( 0.75, -0.25, 128, 128, m_AFBOAttach_4_Texture);
 }
 
 void Renderer::DrawAlphaClear() {
@@ -747,7 +761,10 @@ void Renderer::CreateTextureSandboxVertex() {
 }
 
 void Renderer::DrawVertexSandbox() {
-	g_time += 1 / 300.f;
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//g_time += 1 / 300.f;
 
 	GLuint shader = m_VertexSandboxShader;
 	glUseProgram(shader);
@@ -773,10 +790,15 @@ void Renderer::DrawVertexSandbox() {
 
 	glDisable(GL_BLEND);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	DrawTexture(0.25, 0.25, 128, 128, m_AFBOTexture);
 }
 
 
 void Renderer::DrawTextureSandbox() {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	g_time += 1 / 300.f;
 
 	GLuint shader = m_TextureSandboxShader;
@@ -833,11 +855,16 @@ void Renderer::DrawTextureSandbox() {
 	glUniform2f(repeatULoc, (float)((int)g_time % 4), 4.f);
 
 	glDrawArrays(GL_TRIANGLES, 0, m_AlphaClearVertexCount);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	DrawTexture(-0.25, 0.25, 128, 128, m_AFBOTexture);
 }
 
 void Renderer::DrawGridMesh() {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	g_time += 1 / 300.f;
+	//g_time += 1 / 300.f;
 
 	GLuint shader = m_GridMeshShader;
 	glUseProgram(shader);
@@ -863,6 +890,9 @@ void Renderer::DrawGridMesh() {
 
 	//glDrawArrays(GL_LINE_STRIP, 0, m_GridMeshVertexCount);
 	glDrawArrays(GL_TRIANGLES, 0, m_GridMeshVertexCount);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	DrawTexture(-0.75, 0.25, 128, 128, m_AFBOTexture);
 
 }
 

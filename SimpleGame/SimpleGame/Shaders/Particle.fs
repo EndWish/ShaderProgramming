@@ -1,6 +1,9 @@
 #version 330
 
-layout(location=0) out vec4 FragColor;
+layout(location=0) out vec4 FragColor0;
+layout(location=1) out vec4 FragColor1;
+layout(location=2) out vec4 FragColor2;
+layout(location=3) out vec4 FragColor3;
 
 in vec4 v_Color;
 in vec2 v_Texcoord;
@@ -17,6 +20,9 @@ void Textured();
 void main()
 {
     Textured();
+    FragColor1 = vec4(1,0,0,1);
+    FragColor2 = vec4(0,1,0,1);
+    FragColor3 = vec4(0,0,1,1);
 }
 
 
@@ -29,17 +35,17 @@ vec2 Rotate(vec2 direction, float radian) {
 
 void Textured() {
     vec4 result = texture(u_Texture, v_Texcoord) * v_Color;
-    FragColor = result;
+    FragColor0 = result;
 }
 
 void circle() {
-    FragColor = vec4(v_Texcoord, 0, 1.0f);
+    FragColor0 = vec4(v_Texcoord, 0, 1.0f);
     vec2 newCoord = v_Texcoord - vec2(0.5f, 0.5f);
 
     if(length(newCoord) <= 0.5f){
-        FragColor = vec4(1, 1, 1, 1.0f);
+        FragColor0 = vec4(1, 1, 1, 1.0f);
     }else{
-        FragColor = vec4(0, 0, 0, 0.0f);
+        FragColor0 = vec4(0, 0, 0, 0.0f);
     }
 }
 
@@ -52,13 +58,13 @@ void wave() {
         float height = sin(distance * 100 - u_Time * 10);
         height = pow(height, pow(distance + 1, 20));
 
-        FragColor = vec4(height * v_Texcoord.x, height * v_Texcoord.y, height, 1.0f);
+        FragColor0 = vec4(height * v_Texcoord.x, height * v_Texcoord.y, height, 1.0f);
     }
     else{
         float distance = sqrt( pow(v_Texcoord.x - 0.5f, 2) + pow(v_Texcoord.y - 0.5f, 2));
         float height = sin( distance * 100);
         height = pow(height, pow(distance + 1, 5));
 
-        FragColor = vec4(height, 0, 0, 1.0f);
+        FragColor0 = vec4(height, 0, 0, 1.0f);
     }
 }
